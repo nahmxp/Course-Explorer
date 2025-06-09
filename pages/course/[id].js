@@ -12,12 +12,27 @@ export default function CourseDetail() {
   const [error, setError] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editCourseName, setEditCourseName] = useState('');
+  const [editCourseDescription, setEditCourseDescription] = useState('');
+  const [editCourseImage, setEditCourseImage] = useState('');
+  const [editDriveLink, setEditDriveLink] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchCourseDetails();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (course) {
+      setEditCourseName(course.name);
+      setEditCourseDescription(course.description);
+      setEditCourseImage(course.imageLink || '');
+      setEditDriveLink(course.driveLink);
+    }
+  }, [course]);
 
   const fetchCourseDetails = async () => {
     try {
@@ -50,6 +65,26 @@ export default function CourseDetail() {
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleUpdateCourse = async (e) => {
+    e.preventDefault();
+    setUpdating(true);
+    try {
+      await axios.put(`/api/courses/${id}`, {
+        name: editCourseName,
+        description: editCourseDescription,
+        imageLink: editCourseImage,
+        driveLink: editDriveLink,
+      });
+      setShowEditModal(false);
+      await fetchCourseDetails(); // Refresh course details
+    } catch (error) {
+      console.error('Error updating course:', error);
+      setError(error.response?.data?.error || 'Failed to update course.');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -124,14 +159,24 @@ export default function CourseDetail() {
               Back to Courses
             </motion.button>
           </Link>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowDeleteConfirm(true)}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors shadow-md"
-          >
-            Delete Course
-          </motion.button>
+          <div className="flex gap-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowEditModal(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+            >
+              Edit Course
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowDeleteConfirm(true)}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors shadow-md"
+            >
+              Delete Course
+            </motion.button>
+          </div>
         </div>
 
         <motion.div
@@ -198,20 +243,102 @@ export default function CourseDetail() {
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                  disabled={deleting}
                 >
                   Cancel
                 </button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
+                  type="button"
                   onClick={handleDeleteCourse}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                   disabled={deleting}
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors shadow-md"
                 >
                   {deleting ? 'Deleting...' : 'Delete'}
-                </motion.button>
+                </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Course</h2>
+              <form onSubmit={handleUpdateCourse}>
+                <div className="mb-4">
+                  <label htmlFor="editCourseName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Name
+                  </label>
+                  <input
+                    id="editCourseName"
+                    type="text"
+                    value={editCourseName}
+                    onChange={(e) => setEditCourseName(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={updating}
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="editDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    id="editDescription"
+                    value={editCourseDescription}
+                    onChange={(e) => setEditCourseDescription(e.target.value)}
+                    rows="3"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={updating}
+                  ></textarea>
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="editImageLink" className="block text-sm font-medium text-gray-700 mb-2">
+                    Optional Image Link
+                  </label>
+                  <input
+                    id="editImageLink"
+                    type="url"
+                    value={editCourseImage}
+                    onChange={(e) => setEditCourseImage(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={updating}
+                  />
+                </div>
+                <div className="mb-6">
+                  <label htmlFor="editDriveLink" className="block text-sm font-medium text-gray-700 mb-2">
+                    Google Drive Link
+                  </label>
+                  <input
+                    id="editDriveLink"
+                    type="url"
+                    value={editDriveLink}
+                    onChange={(e) => setEditDriveLink(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    disabled={updating}
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updating}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+                  >
+                    {updating ? 'Updating...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

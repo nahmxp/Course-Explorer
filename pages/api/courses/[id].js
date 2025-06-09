@@ -46,6 +46,24 @@ export default async function handler(req, res) {
         res.status(200).json(course);
         break;
 
+      case 'PUT':
+        const { name, description, imageLink, driveLink } = req.body;
+        if (!name || !description || !driveLink) {
+          return res.status(400).json({ error: 'Name, description, and Google Drive link are required' });
+        }
+
+        const updateResult = await db.collection('courses').updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { name, description, imageLink, driveLink } }
+        );
+
+        if (updateResult.matchedCount === 0) {
+          return res.status(404).json({ error: 'Course not found' });
+        }
+
+        res.status(200).json({ message: 'Course updated successfully' });
+        break;
+
       case 'DELETE':
         const deleteResult = await db.collection('courses').deleteOne({ _id: new ObjectId(id) });
 
@@ -57,7 +75,7 @@ export default async function handler(req, res) {
         break;
 
       default:
-        res.setHeader('Allow', ['GET', 'DELETE']);
+        res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
         res.status(405).end(`Method ${method} Not Allowed`);
     }
   } catch (error) {
