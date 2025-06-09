@@ -115,7 +115,7 @@ export default function Home() {
               <Link href={`/course/${course._id}`} key={course._id}>
                 <motion.div
                   whileHover={{ scale: 1.02, y: -5 }}
-                  className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-shadow p-6 cursor-pointer border border-gray-100"
+                  className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-shadow p-6 cursor-pointer border border-gray-100 flex flex-col justify-between items-start min-h-48"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-3xl">📚</div>
